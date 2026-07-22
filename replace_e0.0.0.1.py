@@ -12,6 +12,73 @@ EXACT = [
     ("sutra",               "śutra"),
 
     # ── compound & longer forms ──
+    # ── new from space-race article ──
+    ("čovečanstvo",         "čovječanstvo"),
+    ("detinjstvu",          "djetinjstvu"),
+    ("detinjstva",          "djetinjstva"),
+    ("detinjstvo",          "djetinjstvo"),
+    ("neuspesima",          "neuspjesima"),
+    ("zabeležili",          "zabilježili"),
+    ("poverljivu",          "povjerljivu"),
+    ("poverljiv",           "povjerljiv"),
+    ("nameštanja",          "namještanja"),
+    ("nameštanje",          "namještanje"),
+    ("bezbednosti",         "bezbjednosti"),
+    ("poslednjeg",          "posljednjeg"),
+    ("poslednje",           "posljednje"),
+    ("dodeliti",            "dodijeliti"),
+    ("zahtevala",           "zahtijevala"),
+    ("obletevši",           "obletjevši"),
+    ("zabeležio",           "zabilježio"),
+    ("zabeležen",           "zabilježen"),
+    ("zabeleže",            "zabilježe"),
+    ("obavešteno",          "obavješteno"),
+    ("dragocena",           "dragocjena"),
+    ("dragoceno",           "dragocjeno"),
+    ("posleratni",          "poslijeratni"),
+    ("posleratnog",         "poslijeratnog"),
+    ("sledeće",             "sljedeće"),
+    ("sledeća",             "sljedeća"),
+    ("pobedile",            "pobijedile"),
+    ("pobedili",            "pobijedili"),
+    ("neuspeha",            "neuspjeha"),
+    ("neuspehe",            "neuspjehe"),
+    ("neuspesi",            "neuspjesi"),
+    ("neuspeh",             "neuspjeh"),
+    ("verovatno",           "vjerovatno"),
+    ("verovali",            "vjerovali"),
+    ("verovala",            "vjerovala"),
+    ("pretnje",             "prijetnje"),
+    ("pretnja",             "prijetnja"),
+    ("naslednika",          "nasljednika"),
+    ("doneli",              "donijeli"),
+    ("zamenila",            "zamijenila"),
+    ("smenjen",             "smijenjen"),
+    ("smeniti",             "smijeniti"),
+    ("dodelio",             "dodijelio"),
+    ("leteli",              "letjeli"),
+    ("letela",              "letjela"),
+    ("obleteo",             "obletio"),
+    ("zamenu",              "zamjenu"),
+    ("dragocen",            "dragocjen"),
+    ("odela",               "odijela"),
+    ("odelo",               "odijelo"),
+    ("odeća",               "odjeća"),
+    ("deo",                 "dio"),
+    # ── end new ──
+    ("neuspešno",           "neuspješno"),
+    ("predsednika",         "predsjednika"),
+    ("pobedila",            "pobijedila"),
+    ("pobedio",             "pobijedio"),
+    ("primene",             "primjene"),
+    ("primena",             "primjena"),
+    ("primer",              "primjer"),
+    ("celina",              "cjelina"),
+    ("nedelje",             "nedjelje"),
+    ("obletela",            "obletjela"),
+    ("volelo",              "voljelo"),
+    ("volela",              "voljela"),
+    ("povređeno",           "povrijeđeno"),
     ("svedočanstvo",        "svjedočanstvo"),
     ("svedočenje",          "svjedočenje"),
     ("nasledništvo",        "nasljedništvo"),
@@ -242,11 +309,11 @@ EXACT = [
     ("pešadija",            "pješadija"),
     ("pešački",             "pješački"),
     ("pešak",               "pješak"),
-    ("obešenjak",           "obješenjak"),
-   
-    ("obesiti",             "objesiti"),
+
     ("predsednica",         "predsjednica"),
     ("predsednik",          "predsjednik"),
+    ("obesiti",             "objesiti"),
+    ("obešenjak",           "obješenjak"),
     ("grehota",             "grjehota"),
     ("greh",                "grijeh"),
     ("blesnuti",            "bljesnuti"),
@@ -286,6 +353,15 @@ STEMS = [
     # menjač / menjačnica
     ("menjač",      "mjenjač"),
 
+    # veštački / veštačke / veština / veštac … (vješt- family)
+    ("vešt",        "vješt"),
+
+    # koren / korena / koreni / korenima …
+    ("koren",       "korijen"),
+
+    # beležiti / beleženje / beleženja / beležim …
+    ("belež",       "biljež"),
+
     # leteti / letenje / letanje — longer prefix to stay safe
     ("letan",       "lijetan"),
     ("leteć",       "leteć"),   # letećih etc — no jat change here, skip
@@ -304,10 +380,12 @@ def _exact_pattern(word: str) -> re.Pattern:
     )
 
 def _stem_pattern(stem: str) -> re.Pattern:
-    """Left-boundary prefix match; captures the rest of the word."""
+    """Left-boundary prefix match; captures the rest of the word.
+    Case-insensitive so that capitalised words (e.g. Veštačke) are caught;
+    the replacement function restores the original capitalisation."""
     return re.compile(
         r'(?<![^\W\d_])(' + re.escape(stem) + r')(\w*)',
-        re.UNICODE
+        re.UNICODE | re.IGNORECASE
     )
 
 _EXACT_COMPILED = [
