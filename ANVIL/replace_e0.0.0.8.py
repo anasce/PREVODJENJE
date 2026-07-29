@@ -562,21 +562,12 @@ KONTEKST_MAPE = [
 
 ,
 {
-    'ekavski': ['slede', 'sledi', 'slediti', 'sledile', 'sledila', 'sledilo', 'sledeli', 'sledeo', 'sledio'],
-    'kljucevi1': ['krv', 'strah', 'užas', 'šok', 'hladnoć', 'mraz', 'led', 'pogled', 'žilama'],
-    'kljucevi2': ['primjer', 'uputstv', 'pravil', 'savjet', 'savet', 'korak', 'trag', 'put', 'vođ', 'mentor', 'putokaz'],
-    'mape_grupa1': {
-        'slede': 'slede', 'sledi': 'sledi', 'slediti': 'slediti', 
-        'sledile': 'sledile', 'sledila': 'sledila', 'sledilo': 'sledilo', 
-        'sledeli': 'sledeli', 'sledeo': 'sledeo', 'sledio': 'sledio'
-    },
-    'mape_grupa2': {
-        'slede': 'slijede', 'sledi': 'slijedi', 'slediti': 'slijediti', 
-        'sledile': 'slijedile', 'sledila': 'slijedjela', 'sledilo': 'slijedjelo', 
-        'sledeli': 'slijedjeli', 'sledeo': 'slijedio', 'sledio': 'slijedio'
-    }
+    'ekavski': ['slede','sledi','slediti','sledile','sledila','sledilo'],
+    'kljucevi1': ['primjer', 'uputstv', 'pravil', 'savjet', 'savet', 'korak', 'trag', 'put', 'vođ', 'mentor'],
+    'kljucevi2': ['krv', 'strah', 'užas', 'šok', 'hladnoć', 'mraz', 'led', 'pogled'],
+    'mape_grupa1': {'slede': 'slijede','sledi': 'slijedi','slediti': 'slijediti','sledile': 'slijedile','sledila': 'slijedila','sledilo': 'slijedilo'},
+    'mape_grupa2': {'slede': 'slede','sledi': 'sledi','slediti': 'slediti','sledila': 'sledila','sledilo': 'sledilo','sledili': 'sledili'}
 }
-
 ,
 {
     'ekavski': ['sledeća','sledeći','sledeće','sledeću','sledećih'],
@@ -592,27 +583,12 @@ KONTEKST_MAPE = [
 IMENA_IZUZECI_KORIJENI = ['vera','veri','veru','sedić', 'seden', 'sedlar', 'razbolović', 'slepčević','unesk']
 
 IZUZECI_VELIKO_SLOVO = ['Nemci', 'Nemcima', 'Nemaca','Svetsko', 'Svetskom']
-_KESH_EXACT = None
-_KESH_STEMS = None
-_KESH_KONTEKST = None
 
 def _wb(rijec): return re.compile(r'(?<![^\W\d_])' + re.escape(rijec) + r'(?![^\W\d_])', re.UNICODE | re.IGNORECASE)
 def _stem(korijen): return re.compile(r'(?<![^\W\d_])(' + re.escape(korijen) + r')(\w*)', re.UNICODE | re.IGNORECASE)
 
-def _inicijalizuj_i_vrati_podatke():
-    global _KESH_EXACT, _KESH_STEMS, _KESH_KONTEKST
-    
-    # Ako su podaci već jednom ukompajlirani u memoriji, odmah ih vrati
-    if _KESH_EXACT is not None:
-        return _KESH_EXACT, _KESH_STEMS, _KESH_KONTEKST
-        
-    # Izvršava se samo jednom pri prvom pozivu aplikacije
-    _KESH_EXACT = [(_wb(e), e, i) for e, i in EXACT]
-    _KESH_STEMS = [(_stem(e), e, i) for e, i in STEMS]
-    _KESH_KONTEKST = KONTEKST_MAPE
-    
-    return _KESH_EXACT, _KESH_STEMS, _KESH_KONTEKST
-
+_EXACT = [(_wb(e), e, i) for e, i in EXACT]
+_STEMS = [(_stem(e), e, i) for e, i in STEMS]
 
 def da_li_je_pocetak_recenice(tekst, pozicija):
     p = tekst[:pozicija].strip()
@@ -623,9 +599,8 @@ def _sacuvaj_velika_slova(izvorna, zamjena, sufiks=""):
     if izvorna.istitle(): return zamjena.capitalize() + sufiks
     return zamjena + sufiks
 
-
-def _primijeni_exact(tekst, ukompajlirani_exact):
-    for pat, e, i in ukompajlirani_exact:
+def _primijeni_exact(tekst):
+    for pat, e, i in _EXACT:
         def _r(m):
             s = m.group(0)
             if da_li_je_pocetak_recenice(tekst, m.start()):
@@ -634,17 +609,14 @@ def _primijeni_exact(tekst, ukompajlirani_exact):
             # POPRAVLJENO: s[0].isupper() provjerava samo veliko početno slovo
             return s if (s[0].isupper() and not da_li_je_pocetak_recenice(tekst, m.start())) else _sacuvaj_velika_slova(s, i)
         tekst = pat.sub(_r, tekst)
-        
     return tekst
 
-
-def _primijeni_stems(tekst, ukompajlirani_stems):
-    
+def _primijeni_stems(tekst):
     TACNA_IMENA = ['vera', 'veri', 'veru']
     KORIJENI_PREZIMENA = ['sedić', 'seden', 'sedlar', 'razbolović', 'slepčević']
     TEHNICKI_IZUZECI = ['telefon', 'televiz', 'telegram', 'telefons', 'televizij', 'teleskop']
     
-    for pat, e, i in ukompajlirani_stems:
+    for pat, e, i in _STEMS:
         def _r(m):
             s, suf = m.group(1), m.group(2)
             puna_rec = (s + suf).lower()
@@ -666,15 +638,14 @@ def _primijeni_stems(tekst, ukompajlirani_stems):
         tekst = pat.sub(_r, tekst)
     return tekst
 
-def _primijeni_kontekst_prozor(tekst, kontekst_mape):
-   
 
+def _primijeni_kontekst_prozor(tekst):
     recenice = re.split(r'([.!?\n]+)', tekst)
-    novi_djelovi = []
+    novi_delovi = []
     
     for recenica in recenice:
         if not recenica.strip() or re.match(r'^[...!?\n]+$', recenica):
-            novi_djelovi.append(recenica)
+            novi_delovi.append(recenica)
             continue
             
         tokeni = re.split(r'([^\W\d_]+)', recenica, flags=re.UNICODE)
@@ -688,7 +659,7 @@ def _primijeni_kontekst_prozor(tekst, kontekst_mape):
             if i == 0 and any(rijec_lower.startswith(korijen) for korijen in IMENA_IZUZECI_KORIJENI):
                 continue
                 
-            for mapa in kontekst_mape:
+            for mapa in KONTEKST_MAPE:
                 if rijec_lower in mapa['ekavski']:
                     skor1 = sum(1 for k in mapa['kljucevi1'] if k in okolina)
                     skor2 = sum(1 for k in mapa['kljucevi2'] if k in okolina)
@@ -701,11 +672,9 @@ def _primijeni_kontekst_prozor(tekst, kontekst_mape):
                     if rijec_lower in baza_zamjene:
                         tokeni[t_idx] = _sacuvaj_velika_slova(trenutna_rijec, baza_zamjene[rijec_lower])
                         
-        novi_djelovi.append("".join(tokeni))
+        novi_delovi.append("".join(tokeni))
         
-    return "".join(novi_djelovi)
-
-
+    return "".join(novi_delovi)
 
 def cirilica_u_latinicu(tekst):
     mapa_cir_lat = {
@@ -713,7 +682,7 @@ def cirilica_u_latinicu(tekst):
         'А': 'A', 'а': 'a', 'Б': 'B', 'б': 'b', 'В': 'V', 'в': 'v',
         'Г': 'G', 'г': 'g', 'Д': 'D', 'д': 'd', 'Ђ': 'Đ', 'ђ': 'đ',
         'Е': 'E', 'е': 'e', 'Ж': 'Ž', 'ж': 'ž', 'З': 'Z', 'з': 'z',
-        'И': 'I', 'и': 'i', 'Ј': 'J', 'ј': 'j', 'K': 'K', 'к': 'k',
+        'И': 'I', 'и': 'i', 'Ј': 'J', 'ј': 'j', 'К': 'K', 'к': 'k',
         'Л': 'L', 'л': 'l', 'М': 'M', 'м': 'm', 'Н': 'N', 'н': 'n',
         'О': 'O', 'о': 'o', 'П': 'P', 'п': 'p', 'Р': 'R', 'р': 'r',
         'С': 'S', 'с': 's', 'Т': 'T', 'т': 't', 'Ћ': 'Ć', 'ћ': 'ć',
@@ -739,23 +708,32 @@ def latinica_u_cirilicu(tekst):
         'L': 'Л', 'l': 'л', 'M': 'М', 'm': 'м', 'N': 'Н', 'n': 'н',
         'O': 'О', 'o': 'о', 'P': 'П', 'p': 'п', 'R': 'Р', 'r': 'р',
         'S': 'С', 's': 'с', 'T': 'Т', 't': 'т', 'Ć': 'Ћ', 'ć': 'ћ',
-        'U': 'У', 'u': 'у', 'F': 'Ф', 'f': 'ф', 'H': 'Х', 'h': 'х',
+        'U': 'У', 'u': 'у', 'F': 'Ф', 'f': 'f', 'H': 'Х', 'h': 'х',
         'C': 'Ц', 'c': 'ц', 'Č': 'Č', 'č': 'č', 'Š': 'Ш', 'š': 'ш'
     }
     return "".join(mapa_lat_cir.get(c, c) for c in tekst)
 
+
 def zamijeni_rijeci(tekst):
     if not tekst:
         return tekst
-    samo_slova = re.sub(r'[^\w]', '', tekst)
-    je_cirilica = samo_slova[0] in set('АБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШабвгдђежзијклљмнњопрстћуфхцчџш') if samo_slova else False
+        
+    cirilica_skup = set('АБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШабвгдђежзијклљмнњопрстћуфхцчџш')
+    
+    tekst_provjera = tekst.lstrip()
+    prvo_slovo = tekst_provjera[0] if tekst_provjera else ""
+    
+    je_cirilica = prvo_slovo in cirilica_skup
+    
     if je_cirilica:
         tekst = cirilica_u_latinicu(tekst)
-    u_exact, u_stems, k_mape = _inicijalizuj_i_vrati_podatke()
-    rezultat = _primijeni_kontekst_prozor(_primijeni_stems(_primijeni_exact(tekst, u_exact), u_stems), k_mape)
-    return latinica_u_cirilicu(rezultat) if je_cirilica else rezultat
-
-
+        
+    tekst_ijekavski = _primijeni_kontekst_prozor(_primijeni_stems(_primijeni_exact(tekst)))
+    
+    if je_cirilica:
+        return latinica_u_cirilicu(tekst_ijekavski)
+        
+    return tekst_ijekavski
 
 def obradi_datoteku(ulaz, izlaz):
     if not os.path.isfile(ulaz): print(f"Greška: '{ulaz}'..."); sys.exit(1)
