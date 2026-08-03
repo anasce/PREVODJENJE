@@ -508,7 +508,7 @@ if __name__ == "__main__":
             with open("novaLista.txt", "w", encoding="utf-8") as f:
                 # Upisivanje trenutnog stanja izabrane liste u fajl
                 for stavka in izabrana_lista:
-                    f.write(f"   {stavka}\n")
+                    f.write(f"   {stavka},\n")
             
             print(f"\nUspješno dodati parovi u {naziv_liste}: {dodati_parovi}")
             print("Nova lista je upisana u 'novaLista.txt'!")
