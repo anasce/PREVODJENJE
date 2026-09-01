@@ -1,6 +1,7 @@
 #E2I PREVODILAC
 #Konvertor ekavice u ijekavicu
 import sys, os, re 
+#https://gorgeous-small-dog.anvil.app
 
 EXACT = {
     'novi dugacki pojam': 'novi prevod 1',
