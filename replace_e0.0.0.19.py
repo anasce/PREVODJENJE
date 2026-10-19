@@ -4,46 +4,31 @@ import sys, os, re
 #https://gorgeous-small-dog.anvil.app
 
 EXACT = {
-    'novi dugacki pojam': 'novi prevod 1',
 
-    'beleškama': 'bilješkama',
-    'menjačima': 'mjenjačima',
+    'razmenama': 'razmjenama',
+
     'zahtevima': 'zahtjevima',
 
-    'beležimo': 'bilježimo',
-    'delićima': 'djelićima',
     'pretrpeo': 'pretrpio',
     'razboleo': 'razbolio',
+    'razmenom': 'razmjenom',
     'svetlost': 'svjetlost',
     'zasedama': 'zasjedama',
 
-    'beleška': 'bilješka',
-    'beleške': 'bilješke',
-    'belešku': 'bilješku',
     'doživeo': 'doživio',
     'nemošću': 'nijemošću',
     'poželeo': 'poželio',
     'razmena': 'razmjena',
     'razmenu': 'razmjenu',
-    'razmenom': 'razmjenom',
-    'razmenama': 'razmjenama',
     'verzija': 'verzija',
     'zahteve': 'zahtjeve',
     'zahtevu': 'zahtjevu',
     'zahtevi': 'zahtjevi',
 
-    'beleži': 'bilježi',
-    'beleže': 'bilježe',
     'belima': 'bijelima',
     'celima': 'cijelima',
     'dedama': 'djedovima',
-    'delića': 'djelića',
-    'deliću': 'djeliću',
-    'delići': 'djelići',
     'drugde': 'drugdje',
-    'menjača': 'mjenjača',
-    'menjaču': 'mjenjačiu',
-    'menjači': 'mjenjači',
     'najpre': 'najprije',
     'napred': 'naprijed',
     'nemima': 'nijemima',
@@ -59,7 +44,6 @@ EXACT = {
     'zahtev': 'zahtjev',
 
     'celoj': 'cijeloj',
-    'delić': 'djelić',
     'doneo': 'donio',
     'iseći': 'isjeći',
     'nigde': 'nigdje',
@@ -70,12 +54,10 @@ EXACT = {
     'pevac': 'kokot',
     'rekao': 'rekao',
     'rekla': 'rekla',
-    'rečju': 'riječji',
-    'menjač': 'mjenjač',
+    'rečju': 'riječju',
     'sreda': 'srijeda',
     'svest': 'svijest',
     'uspeo': 'uspio',
-#    'video': 'vidio',
     'voleo': 'volio',
     'vreme': 'vrijeme',
     'želeo': 'želio',
@@ -188,6 +170,7 @@ STEMS = {
     'preteran': 'pretjeran',
     'pretrpel': 'pretrpjel',
     'primenju': 'primjenju',
+    'privredn': 'privredn',
     'prosveti': 'prosvjeti',
     'ravnomer': 'ravnomjer',
     'sporazum': 'sporazum',
@@ -245,7 +228,6 @@ STEMS = {
     'primeno': 'primjeno',
     'primenj': 'primijenj',
     'primeti': 'primijeti',
-    'privredn': 'privredn',
     'procena': 'procjena',
     'procenj': 'procjenj',
     'procenu': 'procjenu',
@@ -263,7 +245,6 @@ STEMS = {
     'umetnik': 'umjetnik',
     'verenik': 'vjerenik',
     'vrednov': 'vrednov',
-   # 'zahteva': 'zahtijeva',
     'zamenic': 'zamjenic',
     'zamenik': 'zamjenik',
     'zaplena': 'zapljena',
@@ -271,7 +252,7 @@ STEMS = {
     'zapleni': 'zaplijeni',
     'zaplenu': 'zapljenu',
 
-    'beleži': 'bilježi',
+    'belešk': 'bilješk',
     'bekstv': 'bjekstv',
     'bezbed': 'bezbjed',
     'cepnut': 'cjepnut',
@@ -293,6 +274,7 @@ STEMS = {
     'kolevk': 'kolijevk',
     'letarg': 'letarg',
     'letimi': 'letimi',
+    'menjač': 'mjenjač',
     'mleven': 'mljeven',
     'najlep': 'najljep',
     'nalepi': 'nalijepi',
@@ -331,7 +313,6 @@ STEMS = {
     'prevar': 'prevar',
     'preživ': 'preživj',
     'pridev': 'pridjev',
-#    'primen': 'primjen',
     'primer': 'primjer',
     'primet': 'primjet',
     'prispe': 'prispje',
@@ -373,7 +354,6 @@ STEMS = {
     'verova': 'vjerova',
     'volont': 'volont',
     'vremen': 'vremen',
-   # 'zahtev': 'zahtjev',
     'zabele': 'zabilje',
     'zameni': 'zamijeni',
     'zamenj': 'zamjenj',
@@ -676,9 +656,7 @@ STEMS = {
     'čove': 'čovje',
     'venc': 'vijenc',
     'vers': 'vjers',
-   # 'vest': 'vijest',
     'vetr': 'vjetr',
-    #'veća': 'veća',
     'veći': 'veći',
     'veče': 'veče',
     'večn': 'vječn',
@@ -726,12 +704,7 @@ STEM_FRAZE = {
     'Savet Evrop': 'Savjet Evrop',
     'Deda Mraz': 'Djed Mraz',
     'deda mraz': 'djed mraz',
-    'Sneško Belić': 'Snješko Belić',
-    'Sneško Belic': 'Snješko Belic',
-    'Snesko Belic': 'Snjesko Belic',
-    'sneško belić': 'snješko belić',
-    'sneško belic': 'snješko belic',
-    'snesko belic': 'snjesko belic',
+    'Snešk Beli': 'Snješk Bijeli',
 
     'Mlečn put': 'Mlječni put',
     'Već Evrop': 'Vijeć Evrop',
@@ -982,9 +955,9 @@ def _zamijeni_frazu_match(match, korijen_ekavski, korijen_ijekavski):
     tokeni_meca = re.split(r'([a-zA-ZčćžšđČĆŽŠĐ]+)', pronadjeno)
 
     w_brojac = 0
-    
+
     for tok in tokeni_meca:
-        if re.match(r'^[^\W\d_]+$', tok) and w_brojac < len(ekavski_words):
+        if re.match(r'^[a-zA-ZčćžšđČĆŽŠĐ]+$', tok) and w_brojac < len(ekavski_words):
             izv_w = tok
             ek_w = ekavski_words[w_brojac]
             ij_w = ijekavski_words[w_brojac]
@@ -1021,8 +994,15 @@ def zamijeni_rijeci(tekst):
         je_cirilica = prvo_slovo in cirilica_skup
         trenutni_tekst = cirilica_u_latinicu(linija) if je_cirilica else linija
         
-        for pattern, ekavski, zamjena in FRAZE_PATTERNS:
-            trenutni_tekst = pattern.sub(lambda m, e=ekavski, z=zamjena: _zamijeni_frazu_match(m, e, z), trenutni_tekst)
+        # Umjesto starog FRAZE_PATTERNS bloka, koristi ovaj fleksibilni za STEM_FRAZE:
+        for fraza, zamjena in STEM_FRAZE.items():
+            djelovi_fraze = fraza.split()
+            # Ovaj regex dopušta da svaka riječ u frazi ima proizvoljan nastavak (npr. -o, -ić, -oj, -i)
+            pattern_str = r"\b" + r"([a-zA-ZčćžšđČĆŽŠĐ]*) ".join(re.escape(w) for w in djelovi_fraze) + r"([a-zA-ZčćžšđČĆŽŠĐ]*)\b"
+            pattern = re.compile(pattern_str, re.IGNORECASE)
+            
+            trenutni_tekst = pattern.sub(lambda m, e=fraza, z=zamjena: _zamijeni_frazu_match(m, e, z), trenutni_tekst)
+
         
         novi_djelovi = []
         for dio in re.split(r'([.!?\n]+)', trenutni_tekst):
