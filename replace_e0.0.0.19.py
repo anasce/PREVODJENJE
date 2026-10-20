@@ -1019,32 +1019,29 @@ def napravi_fleksibilan_regex(riječ):
 def zamijeni_rijeci(tekst):
     if not tekst: return tekst
     procesuirane_linije = []
-    cirilica_skup = set('АБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШабвгдђежзијклљмнњопрстћуфхцчџш')
     
+    # Sigurna detekcija ćirilice preko Unicode opsega (radi stabilno na Anvil serveru)
+    def sadrzi_cirilicu(struna):
+        return any('\u0400' <= c <= '\u04FF' for c in struna)
+
     for linija in tekst.splitlines(keepends=True):
         tekst_strip = linija.strip()
         if not tekst_strip:
             procesuirane_linije.append(linija)
             continue
             
-        prvo_slovo = next((c for c in tekst_strip if c.isalpha()), '')
-        je_cirilica = prvo_slovo in cirilica_skup
+        # Provjera da li linija sadrži ćirilična slova
+        je_cirilica = sadrzi_cirilicu(linija)
         trenutni_tekst = cirilica_u_latinicu(linija) if je_cirilica else linija
         
-
-
         # Prolazak kroz STEM_FRAZE sa ignorisanjem kvačica
         for fraza, zamjena in STEM_FRAZE.items():
             djelovi_fraze = fraza.split()
-            
-            # Pravimo regex za svaku riječ u frazi koji ignoriše kvačice i dopušta padežne nastavke
             regex_djelovi = [napravi_fleksibilan_regex(w) for w in djelovi_fraze]
             pattern_str = r"\b" + r"([a-zA-ZčćžšđČĆŽŠĐ]*) ".join(regex_djelovi) + r"([a-zA-ZčćžšđČĆŽŠĐ]*)\b"
             pattern = re.compile(pattern_str, re.IGNORECASE)
-            
             trenutni_tekst = pattern.sub(lambda m, e=fraza, z=zamjena: _zamijeni_frazu_match(m, e, z), trenutni_tekst)
 
-        
         novi_djelovi = []
         for dio in re.split(r'([.!?\n]+)', trenutni_tekst):
             if not dio.strip() or re.match(r'^[...!?\n]+$', dio):
@@ -1056,6 +1053,7 @@ def zamijeni_rijeci(tekst):
         procesuirane_linije.append(latinica_u_cirilicu(tekst_ijekavski) if je_cirilica else tekst_ijekavski)
             
     return "".join(procesuirane_linije)
+
 
 
 
