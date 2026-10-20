@@ -364,6 +364,7 @@ STEMS = {
 
     'ameri': 'ameri',
     'beleg': 'biljeg',
+    'belež': 'biljež',
     'belil': 'bjelil',
     'belog': 'bjelog',
     'cedil': 'cjedil',
@@ -703,10 +704,9 @@ STEM_FRAZE = {
     'Bel kraljic': 'Bijel kraljic',
     'Savet Evrop': 'Savjet Evrop',
     'Deda Mraz': 'Djed Mraz',
-    'deda mraz': 'djed mraz',
     'Snešk Beli': 'Snješk Bijeli',
 
-    'Mlečn put': 'Mlječni put',
+    'Mlečn put': 'Mlječn put',
     'Već Evrop': 'Vijeć Evrop',
 
     'Bel kuć': 'Bijel kuć',
@@ -876,6 +876,12 @@ KONTEKST_MAPE = [
 
 ]
 
+def skini_dz(tekst):
+    mape = {'č':'c', 'ć':'c', 'š':'s', 'ž':'z', 'đ':'d', 
+            'Č':'C', 'Ć':'C', 'Š':'S', 'Ž':'Z', 'Đ':'D', 'Ś':'S', 'ś':'s'}
+    return "".join(mape.get(c, c) for c in tekst)
+
+
 def _sacuvaj_velika_slova(izv, zam):
     if not izv or not zam: return zam
     if izv.isupper(): return zam.upper()
@@ -950,34 +956,65 @@ def _zamijeni_frazu_match(match, korijen_ekavski, korijen_ijekavski):
     pronadjeno = match.group(0)
     ekavski_words = korijen_ekavski.split()
     ijekavski_words = korijen_ijekavski.split()
-    
     novi_djelovi = []
     tokeni_meca = re.split(r'([a-zA-ZčćžšđČĆŽŠĐ]+)', pronadjeno)
-
     w_brojac = 0
 
     for tok in tokeni_meca:
         if re.match(r'^[a-zA-ZčćžšđČĆŽŠĐ]+$', tok) and w_brojac < len(ekavski_words):
-            izv_w = tok
-            ek_w = ekavski_words[w_brojac]
-            ij_w = ijekavski_words[w_brojac]
+            izv_w, ek_w, ij_w = tok, ekavski_words[w_brojac], ijekavski_words[w_brojac]
+            ek_cisto = skini_dz(ek_w)
+            nastavak = izv_w[len(ek_cisto):] if len(izv_w) >= len(ek_cisto) else ""
             
-            # Izvlačenje i čuvanje padežnog nastavka
-            nastavak = izv_w[len(ek_w):]
+            mape_karaktera = {'c': '[cčć]', 's': '[sšś]', 'z': '[zž]', 'd': '[dđ]'}
+            dz_po_slovu = {'c': [], 's': [], 'z': [], 'd': []}
+            
+            for idx_e, c_ek in enumerate(ek_w):
+                c_low = skini_dz(c_ek).lower()
+                if c_low in mape_karaktera:
+                    ima = idx_e < len(izv_w) and izv_w[idx_e] != skini_dz(izv_w[idx_e])
+                    dz_po_slovu[c_low].append(ima)
+            
+            privremeni = list(skini_dz(ij_w))
+            konverzija = {'c': 'č', 's': 'š', 'z': 'ž', 'd': 'đ'}
+            brojaci = {'c': 0, 's': 0, 'z': 0, 'd': 0}
+            
+            for idx_i, c_ij in enumerate(privremeni):
+                c_low = c_ij.lower()
+                if c_low in dz_po_slovu:
+                    b_idx = brojaci[c_low]
+                    if b_idx < len(dz_po_slovu[c_low]) and dz_po_slovu[c_low][b_idx]:
+                        privremeni[idx_i] = konverzija[c_low].upper() if c_ij.isupper() else konverzija[c_low]
+                    brojaci[c_low] += 1
+                    
+            ij_w = "".join(privremeni)
             
             if izv_w.isupper():
-                zamijenjena_riječ = ij_w.upper() + nastavak.upper()
+                zamjena = ij_w.upper() + nastavak.upper()
+            elif izv_w.islower():
+                zamjena = ij_w.lower() + nastavak.lower()
             elif izv_w.istitle():
-                zamijenjena_riječ = ij_w.capitalize() + nastavak
+                zamjena = ij_w.capitalize() + nastavak
             else:
-                zamijenjena_riječ = ij_w + nastavak
+                zamjena = "".join(ij_w[i].upper() if i < len(izv_w) and izv_w[i].isupper() else ij_w[i].lower() for i in range(len(ij_w))) + nastavak
                 
-            novi_djelovi.append(zamijenjena_riječ)
+            novi_djelovi.append(zamjena)
             w_brojac += 1
         else:
             novi_djelovi.append(tok)
             
     return "".join(novi_djelovi)
+        # Mapiranje karaktera za fleksibilan regex koji ignoriše kvačice
+def napravi_fleksibilan_regex(riječ):
+            rezultat = ""
+            mape_slova = {
+                'c': '[cčć]', 's': '[sšś]', 'z': '[zž]', 'd': '[dđ]',
+                'C': '[CČĆ]', 'S': '[SŠŚ]', 'Z': '[ZŽ]', 'D': '[DĐ]', 'Ś': '[SŠŚ]', 'ś': '[sšś]'
+            }
+            for c in riječ:
+                c_cisto = skini_dz(c)
+                rezultat += mape_slova.get(c_cisto, re.escape(c))
+            return rezultat
 
 def zamijeni_rijeci(tekst):
     if not tekst: return tekst
@@ -994,11 +1031,15 @@ def zamijeni_rijeci(tekst):
         je_cirilica = prvo_slovo in cirilica_skup
         trenutni_tekst = cirilica_u_latinicu(linija) if je_cirilica else linija
         
-        # Umjesto starog FRAZE_PATTERNS bloka, koristi ovaj fleksibilni za STEM_FRAZE:
+
+
+        # Prolazak kroz STEM_FRAZE sa ignorisanjem kvačica
         for fraza, zamjena in STEM_FRAZE.items():
             djelovi_fraze = fraza.split()
-            # Ovaj regex dopušta da svaka riječ u frazi ima proizvoljan nastavak (npr. -o, -ić, -oj, -i)
-            pattern_str = r"\b" + r"([a-zA-ZčćžšđČĆŽŠĐ]*) ".join(re.escape(w) for w in djelovi_fraze) + r"([a-zA-ZčćžšđČĆŽŠĐ]*)\b"
+            
+            # Pravimo regex za svaku riječ u frazi koji ignoriše kvačice i dopušta padežne nastavke
+            regex_djelovi = [napravi_fleksibilan_regex(w) for w in djelovi_fraze]
+            pattern_str = r"\b" + r"([a-zA-ZčćžšđČĆŽŠĐ]*) ".join(regex_djelovi) + r"([a-zA-ZčćžšđČĆŽŠĐ]*)\b"
             pattern = re.compile(pattern_str, re.IGNORECASE)
             
             trenutni_tekst = pattern.sub(lambda m, e=fraza, z=zamjena: _zamijeni_frazu_match(m, e, z), trenutni_tekst)
